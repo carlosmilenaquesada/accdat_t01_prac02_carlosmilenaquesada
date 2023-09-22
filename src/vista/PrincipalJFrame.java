@@ -2,13 +2,16 @@ package vista;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.attribute.FileTime;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreePath;
 
 public class PrincipalJFrame extends javax.swing.JFrame {
 
@@ -25,15 +28,15 @@ public class PrincipalJFrame extends javax.swing.JFrame {
     public PrincipalJFrame() {
         initComponents();
 
-        //Inicialización de tabla y tree 
+        //Inicialización del Model de la tabla y asignación.
         this.dtm = new DefaultTableModel();
         this.dtm.setColumnIdentifiers(new String[]{"Nombre", "Tamaño", "Directorio", "Última Modificación"});
         this.jTableContenido.setModel(dtm);
 
-        this.dTreeModel = new DefaultTreeModel(new DefaultMutableTreeNode("vacio"));
-        this.jTreeArbol.setModel(dTreeModel);
-
+        //Inicialización del Model del tree y asignación        
         /*this.root = new DefaultMutableTreeNode("Mundo");
+        
+        
         
         this.pais = new DefaultMutableTreeNode("España");
         this.comunidad = new DefaultMutableTreeNode("Madrid");
@@ -69,6 +72,11 @@ public class PrincipalJFrame extends javax.swing.JFrame {
 
         jSplitPaneDivisor.setDividerSize(10);
 
+        jTreeArbol.addTreeSelectionListener(new javax.swing.event.TreeSelectionListener() {
+            public void valueChanged(javax.swing.event.TreeSelectionEvent evt) {
+                jTreeArbolValueChanged(evt);
+            }
+        });
         jScrollPaneRamas.setViewportView(jTreeArbol);
 
         jSplitPaneDivisor.setLeftComponent(jScrollPaneRamas);
@@ -106,7 +114,7 @@ public class PrincipalJFrame extends javax.swing.JFrame {
             .addGroup(jPanelDatosLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanelDatosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPaneTabla, javax.swing.GroupLayout.DEFAULT_SIZE, 568, Short.MAX_VALUE)
+                    .addComponent(jScrollPaneTabla, javax.swing.GroupLayout.DEFAULT_SIZE, 395, Short.MAX_VALUE)
                     .addGroup(jPanelDatosLayout.createSequentialGroup()
                         .addComponent(jLabelCarpeta)
                         .addGap(18, 18, 18)
@@ -118,7 +126,8 @@ public class PrincipalJFrame extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jButtonLimpTabla)
                         .addGap(18, 18, 18)
-                        .addComponent(jLabelAviso, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(jLabelAviso, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanelDatosLayout.setVerticalGroup(
@@ -155,51 +164,98 @@ public class PrincipalJFrame extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    //Metodo auxiliar generador de nodos hijos
+    private void generarHijos(File fHijo, DefaultMutableTreeNode dmtnHijo) {
 
-    private void jButtonSeleccionarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSeleccionarActionPerformed
+        File[] ficherosHijo = fHijo.listFiles();
+        if (ficherosHijo != null) {
 
-        File fichero = new File(jTextFieldRuta.getText());
-
-        File[] ficheros = fichero.listFiles();
-
-        if (ficheros == null) {
-            jLabelAviso.setText("La ruta proporcionada no es correcta.");
-        } else {
-            jLabelAviso.setText("");
-            DefaultMutableTreeNode dmtnRaiz;
-            try {
-                dmtnRaiz = new DefaultMutableTreeNode(fichero.getCanonicalFile());
-            } catch (IOException ex) {
-                dmtnRaiz = new DefaultMutableTreeNode(fichero);
-            }
-            dTreeModel.setRoot(dmtnRaiz);
-            for (File f : ficheros) {
-                DefaultMutableTreeNode dmtnHijo = new DefaultMutableTreeNode(f.getName());
-                dmtnRaiz.add(dmtnHijo);
-                if (f.isDirectory()) {
-                    File[] ficherosHijo = f.listFiles();
-                    if (ficherosHijo != null) {
-
-                        DefaultMutableTreeNode dmtnRaizHijo;
-                        try {
-                            dmtnRaizHijo = new DefaultMutableTreeNode(f.getCanonicalFile());
-                        } catch (IOException ex) {
-                            dmtnRaizHijo = new DefaultMutableTreeNode(f);
-                        }
-                        dmtnHijo.add(dmtnRaizHijo);
-                        for (File fhijo : ficherosHijo) {
-                            dmtnHijo = new DefaultMutableTreeNode(fhijo.getName());
-                            dmtnRaizHijo.add(dmtnHijo);
-                            System.out.println("hola");
-                        }
-                    }
-
-                }
-
+            for (File fhijo : ficherosHijo) {
+                DefaultMutableTreeNode dmtnhijo = new DefaultMutableTreeNode(fhijo.getName());
+                dmtnHijo.add(dmtnhijo);
+                generarHijos(fhijo, dmtnhijo);
             }
         }
+        jTreeArbol.repaint();
+
+    }
+
+    private void jButtonSeleccionarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSeleccionarActionPerformed
+        //Ya que las búsquedas pueden ser procesos costosos, voy a ejecutarlas
+        //en un hilo independiente, para no dejar al programa inservible mientras
+        //busca
+
+        Thread hiloBusqueda = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                File fichero = new File(jTextFieldRuta.getText());
+
+                dTreeModel = new DefaultTreeModel();//(new DefaultMutableTreeNode(fichero.getName()));
+                jTreeArbol.setModel(dTreeModel);
+
+                generarHijos(fichero, (DefaultMutableTreeNode) dTreeModel.getRoot());
+                jLabelAviso.setText("Proceso finalizado");
+            }
+        });
+
+        hiloBusqueda.start();
+
 
     }//GEN-LAST:event_jButtonSeleccionarActionPerformed
+
+    private void jTreeArbolValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_jTreeArbolValueChanged
+        String path = jTreeArbol.getSelectionPath().toString();
+        if (path != null) {
+            path = path.replaceAll(", ", "\\\\");
+
+            File ficheroPrincipal = new File(path);
+
+            File[] subficherosEncontrados = ficheroPrincipal.listFiles();
+
+            System.out.println(subficherosEncontrados);
+
+            if (subficherosEncontrados != null) {
+                for (File f : subficherosEncontrados) {
+                    //Obtener el nombre del fichero actual
+                    String nomFichero = f.getName();
+
+                    //Obtener el tamaño del fichero actual
+                    long tamanio = 0;
+                    try {
+                        tamanio = Files.size(f.toPath());
+                        //Files.size() es de obligatorio checkeo
+                    } catch (IOException e) {
+                        JOptionPane.showMessageDialog(null, e);
+                    }
+
+                    //Obtener si el fichero actual es un directorio o un archivo
+                    String directoryOrFile = "";
+
+                    if (f.isFile()) {
+                        directoryOrFile = "Es un archivo";
+                    } else {
+                        directoryOrFile = "Es un directorio";
+                    }
+
+                    //Obtener la extensión del fichero actual
+                    String ultimaModificacion = "";
+                    try {
+                        FileTime times = Files.getLastModifiedTime(f.toPath());
+                        ultimaModificacion = times.toString();
+                    } catch (IOException ex) {
+                        Logger.getLogger(PrincipalJFrame.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                    //Agregamos la información del fichero actual de esta fila al
+                    //Modal perteneciente a la tabla
+                    dtm.addRow(new String[]{nomFichero, String.valueOf(tamanio), directoryOrFile, ultimaModificacion});
+                }
+            }
+
+        }
+
+
+    }//GEN-LAST:event_jTreeArbolValueChanged
 
     public static void main(String args[]) {
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -211,16 +267,24 @@ public class PrincipalJFrame extends javax.swing.JFrame {
                 if ("Nimbus".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
+
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(PrincipalJFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(PrincipalJFrame.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
+
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(PrincipalJFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(PrincipalJFrame.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
+
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(PrincipalJFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(PrincipalJFrame.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
+
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(PrincipalJFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(PrincipalJFrame.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 
