@@ -32,45 +32,20 @@ import javax.swing.tree.TreePath;
 
 public class PrincipalJFrame extends javax.swing.JFrame {
 
-    //Declaración de mis variables
     DefaultTableModel dtm;
     DefaultTreeModel dTreeModel;
-
     DefaultMutableTreeNode raiz;
-
-    DefaultMutableTreeNode root;
-    DefaultMutableTreeNode pais;
-    DefaultMutableTreeNode comunidad;
-    DefaultMutableTreeNode mostoles;
-    DefaultMutableTreeNode alcobendas;
 
     public PrincipalJFrame() {
         initComponents();
 
-        //Inicialización del Model de la tabla y asignación.
         this.dtm = new DefaultTableModel();
         this.dtm.setColumnIdentifiers(new String[]{"Nombre", "Tamaño", "Directorio", "Última Modificación"});
         this.jTableContenido.setModel(dtm);
 
-        //Inicialización del Model del tree y asignación       
-        raiz = new DefaultMutableTreeNode("vacio");
-        dTreeModel = new DefaultTreeModel(raiz);
+        this.raiz = new DefaultMutableTreeNode("vacio");
+        this.dTreeModel = new DefaultTreeModel(raiz);
         this.jTreeArbol.setModel(dTreeModel);
-
-        /*this.root = new DefaultMutableTreeNode("Mundo");
-        
-        
-        this.pais = new DefaultMutableTreeNode("España");
-        this.comunidad = new DefaultMutableTreeNode("Madrid");
-        this.mostoles = new DefaultMutableTreeNode("Mostoles");
-        this.alcobendas = new DefaultMutableTreeNode("Alcobendas");*/
-        //Asignación de componentes
-        /*this.root.add(this.pais);
-        this.pais.add(comunidad);
-        this.comunidad.add(mostoles);
-        this.comunidad.add(alcobendas);
-
-        this.dTreeModel.setRoot(root);*/
     }
 
     @SuppressWarnings("unchecked")
@@ -130,8 +105,18 @@ public class PrincipalJFrame extends javax.swing.JFrame {
         jScrollPaneTabla.setViewportView(jTableContenido);
 
         jButtonLimpRuta.setText("Limpiar ruta");
+        jButtonLimpRuta.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonLimpRutaActionPerformed(evt);
+            }
+        });
 
         jButtonLimpTabla.setText("Limpiar tabla");
+        jButtonLimpTabla.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonLimpTablaActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanelDatosLayout = new javax.swing.GroupLayout(jPanelDatos);
         jPanelDatos.setLayout(jPanelDatosLayout);
@@ -189,14 +174,61 @@ public class PrincipalJFrame extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+    //Métodos auxiliares obtención de datos
+
+    private static File convertirTreePathAFile(TreePath tp) {
+        String path = tp.toString();
+        path = path.replaceAll(", ", "\\\\");
+        path = path.replace("[", "").replace("]", "");
+        return new File(path);
+    }
+
+    private static String obtenerTamanio(File f) {
+        String tamanio = "";
+        try {
+            tamanio = String.valueOf(Files.size(f.toPath()));
+        } catch (Exception e) {
+            tamanio = "no encontrado";
+        }
+        return tamanio;
+    }
+
+    private static String esDirectorioOArchivo(File f) {
+        String directoryOrFile = "";
+        try {
+            if (f.isFile()) {
+                directoryOrFile = "Es un archivo.";
+            } else {
+                if (f.isDirectory()) {
+                    directoryOrFile = "Es un directorio.";
+                } else {
+                    directoryOrFile = "Tipo no conocido.";
+                }
+            }
+        } catch (Exception e) {
+            directoryOrFile = "no encontrado";
+        }
+        return directoryOrFile;
+    }
+
+    private static String obtenerFechaModificacion(File file) {
+        String valor = "";
+        try {
+            DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            Date currentDate = new Date(file.lastModified());
+            valor = df.format(currentDate.getTime());
+        } catch (Exception e) {
+            valor = "no encontrado";
+        }
+        return valor;
+    }
 
     //Metodo auxiliar generador de nodos hijos
     private void generarHijos(File file, DefaultMutableTreeNode nodo) {
         try {
             File[] files = file.listFiles();
-
             DefaultMutableTreeNode dmtn;
-
+            jTreeArbol.repaint();
             if (files != null) {
                 for (File f : files) {
                     dmtn = new DefaultMutableTreeNode(f.getName());
@@ -205,98 +237,82 @@ public class PrincipalJFrame extends javax.swing.JFrame {
                 }
             }
         } catch (Exception e) {
-            jLabelAviso.setText("El fichero " + file + " provocó un error.");
+            JOptionPane.showMessageDialog(null, "Se produjo un error en la obtención de datos: " + e);
         }
     }
 
     private void jButtonSeleccionarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSeleccionarActionPerformed
-        //Ya que las búsquedas pueden ser procesos costosos, voy a ejecutarlas
-        //en un hilo independiente, para no dejar al programa inservible mientras
-        //busca
+        try {
+            Thread hiloBusqueda = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    jLabelAviso.setText("");
 
-        Thread hiloBusqueda = new Thread(new Runnable() {
-            @Override
-            public void run() {
-
-                jLabelAviso.setText("");
-
-                if (jTextFieldRuta.getText().isEmpty()) {
-                    jLabelAviso.setText("Debe introducir una ruta");
-                } else {
-                    File fichero = new File(jTextFieldRuta.getText());
-                    if (fichero.exists()) {
-                        DefaultMutableTreeNode dmtn = new DefaultMutableTreeNode(fichero);
-                        dTreeModel.setRoot(dmtn);
-
-                        generarHijos(fichero, dmtn);
-                        jLabelAviso.setText("Proceso finalizado");
-
+                    if (jTextFieldRuta.getText().isEmpty()) {
+                        jLabelAviso.setText("Debe introducir una ruta.");
                     } else {
-                        jLabelAviso.setText("La ruta introducida no es correcta");
+                        File fichero = new File(jTextFieldRuta.getText());
+                        if (fichero.exists()) {
+                            DefaultMutableTreeNode dmtn = new DefaultMutableTreeNode(fichero);
+                            dTreeModel.setRoot(dmtn);
+                            generarHijos(fichero, dmtn);
+                            jLabelAviso.setText("Proceso finalizado.");
+                        } else {
+                            jLabelAviso.setText("La ruta introducida no es correcta.");
+                        }
                     }
-
                 }
-                jTreeArbol.repaint();
-            }
-        });
-
-        hiloBusqueda.start();
+            });
+            hiloBusqueda.start();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Se produjo un error en la ejecución: " + e);
+        }
 
 
     }//GEN-LAST:event_jButtonSeleccionarActionPerformed
 
+
     private void jTreeArbolValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_jTreeArbolValueChanged
-
         dtm.getDataVector().removeAllElements();
-
+        jLabelAviso.setText("");
         TreePath tp = jTreeArbol.getSelectionPath();
-        if (tp != null) {
-            String path = tp.toString();
-            path = path.replaceAll(", ", "\\\\");
-            path = path.replace("[", "").replace("]", "");
-            System.out.println(path);
-            File ficheroPrincipal = new File(path);
+        File ficheroPrincipal = convertirTreePathAFile(tp);
 
-            File[] subficherosEncontrados = ficheroPrincipal.listFiles();
+        try {
+            if (tp != null && ficheroPrincipal.exists()) {
+                File[] subficherosEncontrados = ficheroPrincipal.listFiles();
 
-            if (subficherosEncontrados == null || subficherosEncontrados.length == 0) {
-                subficherosEncontrados = new File[]{ficheroPrincipal};
-            }
+                if (subficherosEncontrados == null || subficherosEncontrados.length == 0) {
+                    subficherosEncontrados = new File[]{ficheroPrincipal};
+                }
 
-            try {
                 for (File f : subficherosEncontrados) {
-                    
+
                     String nomFichero = f.getName();
 
-                    
-                    String tamanio = "";
-                    tamanio = String.valueOf(Files.size(f.toPath()));
+                    String tamanio = obtenerTamanio(f);
 
-                    
-                    String directoryOrFile = "";
+                    String directoryOrFile = esDirectorioOArchivo(f);
 
-                    if (f.isFile()) {
-                        directoryOrFile = "Es un archivo";
-                    } else {
-                        directoryOrFile = "Es un directorio";
-                    }
+                    String ultimaModificacion = obtenerFechaModificacion(f);
 
-                    //Obtener la extensión del fichero actual
-                    String ultimaModificacion = "";
-                    DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");                    
-                    long times = f.lastModified();
-                    Date currentDate = new Date(times);
-                    ultimaModificacion = df.format(currentDate.getTime());
-                    
-                    dtm.addRow(new String[]{nomFichero, String.valueOf(tamanio), directoryOrFile, ultimaModificacion});
+                    dtm.addRow(new String[]{nomFichero, tamanio, directoryOrFile, ultimaModificacion});
                 }
-            } catch (Exception ex) {
-                jLabelAviso.setText("Objeto inalcanzable.");
+            } else {
+                jLabelAviso.setText("El fichero marcado es inalcanzable.");
             }
-
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "El objeto seleccionado provocó el error: " + e);
         }
-
     }//GEN-LAST:event_jTreeArbolValueChanged
+
+    private void jButtonLimpRutaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonLimpRutaActionPerformed
+        jTextFieldRuta.setText("");
+    }//GEN-LAST:event_jButtonLimpRutaActionPerformed
+
+    private void jButtonLimpTablaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonLimpTablaActionPerformed
+        dtm.getDataVector().removeAllElements();
+    }//GEN-LAST:event_jButtonLimpTablaActionPerformed
 
     public static void main(String args[]) {
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -330,6 +346,7 @@ public class PrincipalJFrame extends javax.swing.JFrame {
         //</editor-fold>
 
         java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
             public void run() {
                 new PrincipalJFrame().setVisible(true);
             }
