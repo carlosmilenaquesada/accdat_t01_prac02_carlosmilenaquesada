@@ -1,16 +1,26 @@
 package vista;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.BasicFileAttributes.*;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.Temporal;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,6 +28,7 @@ import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 
 public class PrincipalJFrame extends javax.swing.JFrame {
 
@@ -235,31 +246,33 @@ public class PrincipalJFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jButtonSeleccionarActionPerformed
 
     private void jTreeArbolValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_jTreeArbolValueChanged
-        String path = jTreeArbol.getSelectionPath().toString();
-        if (path != null) {
-            path = path.replaceAll(", ", "\\\\");
 
+        dtm.getDataVector().removeAllElements();
+
+        TreePath tp = jTreeArbol.getSelectionPath();
+        if (tp != null) {
+            String path = tp.toString();
+            path = path.replaceAll(", ", "\\\\");
+            path = path.replace("[", "").replace("]", "");
+            System.out.println(path);
             File ficheroPrincipal = new File(path);
 
             File[] subficherosEncontrados = ficheroPrincipal.listFiles();
 
-            System.out.println(subficherosEncontrados);
+            if (subficherosEncontrados == null || subficherosEncontrados.length == 0) {
+                subficherosEncontrados = new File[]{ficheroPrincipal};
+            }
 
-            if (subficherosEncontrados != null) {
+            try {
                 for (File f : subficherosEncontrados) {
-                    //Obtener el nombre del fichero actual
+                    
                     String nomFichero = f.getName();
 
-                    //Obtener el tamaño del fichero actual
-                    long tamanio = 0;
-                    try {
-                        tamanio = Files.size(f.toPath());
-                        //Files.size() es de obligatorio checkeo
-                    } catch (IOException e) {
-                        JOptionPane.showMessageDialog(null, e);
-                    }
+                    
+                    String tamanio = "";
+                    tamanio = String.valueOf(Files.size(f.toPath()));
 
-                    //Obtener si el fichero actual es un directorio o un archivo
+                    
                     String directoryOrFile = "";
 
                     if (f.isFile()) {
@@ -270,21 +283,18 @@ public class PrincipalJFrame extends javax.swing.JFrame {
 
                     //Obtener la extensión del fichero actual
                     String ultimaModificacion = "";
-                    try {
-                        FileTime times = Files.getLastModifiedTime(f.toPath());
-                        ultimaModificacion = times.toString();
-                    } catch (IOException ex) {
-                        Logger.getLogger(PrincipalJFrame.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-
-                    //Agregamos la información del fichero actual de esta fila al
-                    //Modal perteneciente a la tabla
+                    DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");                    
+                    long times = f.lastModified();
+                    Date currentDate = new Date(times);
+                    ultimaModificacion = df.format(currentDate.getTime());
+                    
                     dtm.addRow(new String[]{nomFichero, String.valueOf(tamanio), directoryOrFile, ultimaModificacion});
                 }
+            } catch (Exception ex) {
+                jLabelAviso.setText("Objeto inalcanzable.");
             }
 
         }
-
 
     }//GEN-LAST:event_jTreeArbolValueChanged
 
