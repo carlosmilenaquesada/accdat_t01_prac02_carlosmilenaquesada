@@ -1,29 +1,11 @@
 package vista;
 
+import java.awt.Dimension;
 import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
-
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.BasicFileAttributes.*;
-import java.nio.file.attribute.FileTime;
-import java.nio.file.attribute.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.Temporal;
-import java.time.temporal.TemporalAccessor;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
-import java.util.Iterator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -36,6 +18,8 @@ public class PrincipalJFrame extends javax.swing.JFrame {
     DefaultTreeModel dTreeModel;
     DefaultMutableTreeNode raiz;
 
+    Thread hiloBusqueda;
+
     public PrincipalJFrame() {
         initComponents();
 
@@ -46,6 +30,8 @@ public class PrincipalJFrame extends javax.swing.JFrame {
         this.raiz = new DefaultMutableTreeNode("vacio");
         this.dTreeModel = new DefaultTreeModel(raiz);
         this.jTreeArbol.setModel(dTreeModel);
+
+        hiloBusqueda = crearHilo();
     }
 
     @SuppressWarnings("unchecked")
@@ -84,7 +70,8 @@ public class PrincipalJFrame extends javax.swing.JFrame {
 
         jLabelCarpeta.setText("Carpeta");
 
-        jButtonSeleccionar.setText("Seleccionar");
+        jButtonSeleccionar.setText("Iniciar búsqueda");
+        jButtonSeleccionar.setPreferredSize(new java.awt.Dimension(111, 23));
         jButtonSeleccionar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButtonSeleccionarActionPerformed(evt);
@@ -125,20 +112,19 @@ public class PrincipalJFrame extends javax.swing.JFrame {
             .addGroup(jPanelDatosLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanelDatosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPaneTabla, javax.swing.GroupLayout.DEFAULT_SIZE, 395, Short.MAX_VALUE)
-                    .addGroup(jPanelDatosLayout.createSequentialGroup()
-                        .addComponent(jLabelCarpeta)
-                        .addGap(18, 18, 18)
-                        .addComponent(jTextFieldRuta)
-                        .addGap(18, 18, 18)
-                        .addComponent(jButtonSeleccionar))
+                    .addComponent(jScrollPaneTabla, javax.swing.GroupLayout.DEFAULT_SIZE, 450, Short.MAX_VALUE)
+                    .addComponent(jLabelAviso, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanelDatosLayout.createSequentialGroup()
                         .addComponent(jButtonLimpRuta)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jButtonLimpTabla)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(jPanelDatosLayout.createSequentialGroup()
+                        .addComponent(jLabelCarpeta)
                         .addGap(18, 18, 18)
-                        .addComponent(jLabelAviso, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addComponent(jTextFieldRuta, javax.swing.GroupLayout.PREFERRED_SIZE, 255, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jButtonSeleccionar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanelDatosLayout.setVerticalGroup(
@@ -148,15 +134,16 @@ public class PrincipalJFrame extends javax.swing.JFrame {
                 .addGroup(jPanelDatosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabelCarpeta)
                     .addComponent(jTextFieldRuta, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButtonSeleccionar))
+                    .addComponent(jButtonSeleccionar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanelDatosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jButtonLimpTabla, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButtonLimpRuta, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabelAviso, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
-                .addComponent(jScrollPaneTabla, javax.swing.GroupLayout.PREFERRED_SIZE, 234, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(83, Short.MAX_VALUE))
+                    .addComponent(jButtonLimpRuta, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabelAviso, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPaneTabla, javax.swing.GroupLayout.DEFAULT_SIZE, 282, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         jSplitPaneDivisor.setRightComponent(jPanelDatos);
@@ -174,13 +161,17 @@ public class PrincipalJFrame extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-    //Métodos auxiliares obtención de datos
 
-    private static File convertirTreePathAFile(TreePath tp) {
-        String path = tp.toString();
-        path = path.replaceAll(", ", "\\\\");
-        path = path.replace("[", "").replace("]", "");
-        return new File(path);
+    //MÉTODOS AUXILIARES OBTENCIÓN DE DATOS
+    //--------------------------------------------------------------------------
+    private static String convertirTreePathAString(TreePath tp) {
+        String path = "";
+        if (tp != null && !tp.toString().isEmpty()) {
+            path = tp.toString();
+            path = path.replaceAll(", ", "\\\\");
+            path = path.replace("[", "").replace("]", "");
+        }
+        return path;
     }
 
     private static String obtenerTamanio(File f) {
@@ -223,7 +214,14 @@ public class PrincipalJFrame extends javax.swing.JFrame {
         return valor;
     }
 
-    //Metodo auxiliar generador de nodos hijos
+    private void borrarTabla() {
+        for (int i = dtm.getRowCount() - 1; i >= 0; i--) {
+            dtm.removeRow(i);
+        }
+    }
+
+    //MÉTODO AUXILIAR RECURSIVO GENERADOR DE NODOS
+    //--------------------------------------------------------------------------
     private void generarHijos(File file, DefaultMutableTreeNode nodo) {
         try {
             File[] files = file.listFiles();
@@ -241,31 +239,58 @@ public class PrincipalJFrame extends javax.swing.JFrame {
         }
     }
 
-    private void jButtonSeleccionarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSeleccionarActionPerformed
-        try {
-            Thread hiloBusqueda = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    jLabelAviso.setText("");
-
+    //FUNCIÓN QUE CREA UN HILO PARA LA BÚSQUEDA Y CREACIÓN DE ÁRBOL DE FORMA RECURSIVA
+    //--------------------------------------------------------------------------
+    private Thread crearHilo() {
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
                     if (jTextFieldRuta.getText().isEmpty()) {
                         jLabelAviso.setText("Debe introducir una ruta.");
                     } else {
                         File fichero = new File(jTextFieldRuta.getText());
                         if (fichero.exists()) {
-                            DefaultMutableTreeNode dmtn = new DefaultMutableTreeNode(fichero);
+                            DefaultMutableTreeNode dmtn = new DefaultMutableTreeNode(fichero.getCanonicalFile());
+
                             dTreeModel.setRoot(dmtn);
+                            jLabelAviso.setText("Cargando información...");
                             generarHijos(fichero, dmtn);
                             jLabelAviso.setText("Proceso finalizado.");
+                            jButtonSeleccionar.setText("Iniciar búsqueda");
+                            jButtonSeleccionar.setPreferredSize(new Dimension(122, 23));
                         } else {
                             jLabelAviso.setText("La ruta introducida no es correcta.");
                         }
                     }
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(null, "Se produjo un error en la ejecución: " + e);
                 }
-            });
+            }
+        });
+
+    }
+
+
+    private void jButtonSeleccionarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSeleccionarActionPerformed
+        if (jButtonSeleccionar.getText().equals("Iniciar búsqueda")) {
+            if (hiloBusqueda.getState() != Thread.State.NEW) {
+                hiloBusqueda = crearHilo();
+            }
+            jButtonSeleccionar.setText("Detener");
+            jButtonSeleccionar.setPreferredSize(new Dimension(122, 23));
             hiloBusqueda.start();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Se produjo un error en la ejecución: " + e);
+        } else {
+            if (jButtonSeleccionar.getText().equals("Detener")) {
+                jButtonSeleccionar.setText("Iniciar búsqueda");
+                jButtonSeleccionar.setPreferredSize(new Dimension(122, 23));
+                jLabelAviso.setText("Búsqueda cancelada.");
+
+                if (hiloBusqueda.getState() != Thread.State.TERMINATED) {
+                    hiloBusqueda.interrupt();
+                }
+
+            }
         }
 
 
@@ -273,36 +298,38 @@ public class PrincipalJFrame extends javax.swing.JFrame {
 
 
     private void jTreeArbolValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_jTreeArbolValueChanged
-        dtm.getDataVector().removeAllElements();
-        jLabelAviso.setText("");
-        TreePath tp = jTreeArbol.getSelectionPath();
-        File ficheroPrincipal = convertirTreePathAFile(tp);
+        System.out.println(evt.getNewLeadSelectionPath());
+        if (evt.getNewLeadSelectionPath() != null) {
+            TreePath tp = jTreeArbol.getSelectionPath();
+            File ficheroPrincipal = new File(convertirTreePathAString(tp));
+            borrarTabla();
+            try {
+                if (tp != null && ficheroPrincipal.exists()) {
+                    File[] subficherosEncontrados = ficheroPrincipal.listFiles();
 
-        try {
-            if (tp != null && ficheroPrincipal.exists()) {
-                File[] subficherosEncontrados = ficheroPrincipal.listFiles();
+                    if (subficherosEncontrados == null || subficherosEncontrados.length == 0) {
+                        subficherosEncontrados = new File[]{ficheroPrincipal};
+                    }
 
-                if (subficherosEncontrados == null || subficherosEncontrados.length == 0) {
-                    subficherosEncontrados = new File[]{ficheroPrincipal};
+                    for (File f : subficherosEncontrados) {
+
+                        String nomFichero = f.getName();
+
+                        String tamanio = obtenerTamanio(f);
+
+                        String directoryOrFile = esDirectorioOArchivo(f);
+
+                        String ultimaModificacion = obtenerFechaModificacion(f);
+
+                        dtm.addRow(new String[]{nomFichero, tamanio, directoryOrFile, ultimaModificacion});
+                    }
+                } else {
+                    jLabelAviso.setText("El fichero marcado es inalcanzable.");
                 }
-
-                for (File f : subficherosEncontrados) {
-
-                    String nomFichero = f.getName();
-
-                    String tamanio = obtenerTamanio(f);
-
-                    String directoryOrFile = esDirectorioOArchivo(f);
-
-                    String ultimaModificacion = obtenerFechaModificacion(f);
-
-                    dtm.addRow(new String[]{nomFichero, tamanio, directoryOrFile, ultimaModificacion});
-                }
-            } else {
-                jLabelAviso.setText("El fichero marcado es inalcanzable.");
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "El objeto seleccionado provocó el error: " + e);
             }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "El objeto seleccionado provocó el error: " + e);
+
         }
     }//GEN-LAST:event_jTreeArbolValueChanged
 
@@ -311,7 +338,8 @@ public class PrincipalJFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jButtonLimpRutaActionPerformed
 
     private void jButtonLimpTablaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonLimpTablaActionPerformed
-        dtm.getDataVector().removeAllElements();
+        borrarTabla();
+
     }//GEN-LAST:event_jButtonLimpTablaActionPerformed
 
     public static void main(String args[]) {
