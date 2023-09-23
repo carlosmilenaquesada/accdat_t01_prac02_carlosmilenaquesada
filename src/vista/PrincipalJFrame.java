@@ -3,7 +3,6 @@ package vista;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.attribute.FileTime;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -11,13 +10,14 @@ import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 
 public class PrincipalJFrame extends javax.swing.JFrame {
 
     //Declaración de mis variables
     DefaultTableModel dtm;
     DefaultTreeModel dTreeModel;
+
+    DefaultMutableTreeNode raiz;
 
     DefaultMutableTreeNode root;
     DefaultMutableTreeNode pais;
@@ -33,9 +33,12 @@ public class PrincipalJFrame extends javax.swing.JFrame {
         this.dtm.setColumnIdentifiers(new String[]{"Nombre", "Tamaño", "Directorio", "Última Modificación"});
         this.jTableContenido.setModel(dtm);
 
-        //Inicialización del Model del tree y asignación        
+        //Inicialización del Model del tree y asignación  
+        raiz = new DefaultMutableTreeNode("vacío");
+        this.dTreeModel = new DefaultTreeModel(raiz);
+        this.jTreeArbol.setModel(dTreeModel);
+
         /*this.root = new DefaultMutableTreeNode("Mundo");
-        
         
         
         this.pais = new DefaultMutableTreeNode("España");
@@ -69,8 +72,12 @@ public class PrincipalJFrame extends javax.swing.JFrame {
         jLabelAviso = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setPreferredSize(new java.awt.Dimension(900, 400));
 
         jSplitPaneDivisor.setDividerSize(10);
+        jSplitPaneDivisor.setPreferredSize(new java.awt.Dimension(500, 400));
+
+        jScrollPaneRamas.setPreferredSize(new java.awt.Dimension(400, 322));
 
         jTreeArbol.addTreeSelectionListener(new javax.swing.event.TreeSelectionListener() {
             public void valueChanged(javax.swing.event.TreeSelectionEvent evt) {
@@ -154,28 +161,42 @@ public class PrincipalJFrame extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPaneDivisor)
+            .addComponent(jSplitPaneDivisor, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPaneDivisor)
+            .addComponent(jSplitPaneDivisor, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     //Metodo auxiliar generador de nodos hijos
-    private void generarHijos(File fHijo, DefaultMutableTreeNode dmtnHijo) {
+    private void generarHijos(File file, DefaultMutableTreeNode nodo) {
+        File[] ficherosHijo = file.listFiles();
 
-        File[] ficherosHijo = fHijo.listFiles();
-        if (ficherosHijo != null) {
-
-            for (File fhijo : ficherosHijo) {
-                DefaultMutableTreeNode dmtnhijo = new DefaultMutableTreeNode(fhijo.getName());
-                dmtnHijo.add(dmtnhijo);
-                generarHijos(fhijo, dmtnhijo);
+        if (ficherosHijo == null) {
+            if (file.isFile() || file.isDirectory()) {
+                //O es un archivo, o es una carpeta vacía
+                ficherosHijo = new File[]{file};
             }
         }
+
+        for (File f: ficherosHijo) {
+           if(f == null){
+               System.out.println();
+           } 
+        }
+        
+        for (File f : ficherosHijo) {
+            DefaultMutableTreeNode nuevoNodo = new DefaultMutableTreeNode(f);
+            nodo.add(nuevoNodo);
+            if (ficherosHijo.length > 1) {
+                generarHijos(f, nuevoNodo);
+            }
+
+        }
+
         jTreeArbol.repaint();
 
     }
@@ -188,13 +209,25 @@ public class PrincipalJFrame extends javax.swing.JFrame {
         Thread hiloBusqueda = new Thread(new Runnable() {
             @Override
             public void run() {
+                jLabelAviso.setText("");
+
                 File fichero = new File(jTextFieldRuta.getText());
 
-                dTreeModel = new DefaultTreeModel();//(new DefaultMutableTreeNode(fichero.getName()));
-                jTreeArbol.setModel(dTreeModel);
+                if (fichero.getPath().isEmpty()) {
+                    jLabelAviso.setText("Debe introducir una ruta");
+                } else {
+                    if (fichero.isFile() || fichero.isDirectory()) {
+                        System.out.println(fichero.isDirectory());
+                        raiz = new DefaultMutableTreeNode(fichero);
+                        dTreeModel.setRoot(raiz);
 
-                generarHijos(fichero, (DefaultMutableTreeNode) dTreeModel.getRoot());
-                jLabelAviso.setText("Proceso finalizado");
+                        generarHijos(fichero, raiz);
+                        jLabelAviso.setText("Proceso finalizado");
+                    } else {
+                        jLabelAviso.setText("La ruta introducida no es correcta");
+                    }
+
+                }
             }
         });
 
@@ -272,19 +305,19 @@ public class PrincipalJFrame extends javax.swing.JFrame {
             }
         } catch (ClassNotFoundException ex) {
             java.util.logging.Logger.getLogger(PrincipalJFrame.class
-                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
+                .getName()).log(java.util.logging.Level.SEVERE, null, ex);
 
         } catch (InstantiationException ex) {
             java.util.logging.Logger.getLogger(PrincipalJFrame.class
-                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
+                .getName()).log(java.util.logging.Level.SEVERE, null, ex);
 
         } catch (IllegalAccessException ex) {
             java.util.logging.Logger.getLogger(PrincipalJFrame.class
-                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
+                .getName()).log(java.util.logging.Level.SEVERE, null, ex);
 
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(PrincipalJFrame.class
-                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
+                .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 
