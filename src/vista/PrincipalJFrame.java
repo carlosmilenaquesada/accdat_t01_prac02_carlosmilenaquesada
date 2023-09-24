@@ -1,12 +1,10 @@
 package vista;
 
-import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -38,17 +36,19 @@ public class PrincipalJFrame extends javax.swing.JFrame {
     private void initComponents() {
 
         jSplitPaneDivisor = new javax.swing.JSplitPane();
-        jScrollPaneRamas = new javax.swing.JScrollPane();
-        jTreeArbol = new javax.swing.JTree();
         jPanelDatos = new javax.swing.JPanel();
         jLabelCarpeta = new javax.swing.JLabel();
         jTextFieldRuta = new javax.swing.JTextField();
-        jButtonSeleccionar = new javax.swing.JButton();
         jScrollPaneTabla = new javax.swing.JScrollPane();
         jTableContenido = new javax.swing.JTable();
         jButtonLimpRuta = new javax.swing.JButton();
         jButtonLimpTabla = new javax.swing.JButton();
         jLabelAviso = new javax.swing.JLabel();
+        jToggleButtonBuscar = new javax.swing.JToggleButton();
+        jPanelArbol = new javax.swing.JPanel();
+        jButtonActualizarArbol = new javax.swing.JButton();
+        jScrollPaneRamas = new javax.swing.JScrollPane();
+        jTreeArbol = new javax.swing.JTree();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setPreferredSize(new java.awt.Dimension(900, 400));
@@ -56,26 +56,7 @@ public class PrincipalJFrame extends javax.swing.JFrame {
         jSplitPaneDivisor.setDividerSize(10);
         jSplitPaneDivisor.setPreferredSize(new java.awt.Dimension(500, 400));
 
-        jScrollPaneRamas.setPreferredSize(new java.awt.Dimension(400, 322));
-
-        jTreeArbol.addTreeSelectionListener(new javax.swing.event.TreeSelectionListener() {
-            public void valueChanged(javax.swing.event.TreeSelectionEvent evt) {
-                jTreeArbolValueChanged(evt);
-            }
-        });
-        jScrollPaneRamas.setViewportView(jTreeArbol);
-
-        jSplitPaneDivisor.setLeftComponent(jScrollPaneRamas);
-
         jLabelCarpeta.setText("Carpeta");
-
-        jButtonSeleccionar.setText("Iniciar búsqueda");
-        jButtonSeleccionar.setPreferredSize(new java.awt.Dimension(111, 23));
-        jButtonSeleccionar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButtonSeleccionarActionPerformed(evt);
-            }
-        });
 
         jTableContenido.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -104,6 +85,13 @@ public class PrincipalJFrame extends javax.swing.JFrame {
             }
         });
 
+        jToggleButtonBuscar.setText("Buscar");
+        jToggleButtonBuscar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jToggleButtonBuscarActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanelDatosLayout = new javax.swing.GroupLayout(jPanelDatos);
         jPanelDatos.setLayout(jPanelDatosLayout);
         jPanelDatosLayout.setHorizontalGroup(
@@ -111,19 +99,21 @@ public class PrincipalJFrame extends javax.swing.JFrame {
             .addGroup(jPanelDatosLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanelDatosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPaneTabla, javax.swing.GroupLayout.DEFAULT_SIZE, 450, Short.MAX_VALUE)
+                    .addComponent(jScrollPaneTabla, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addComponent(jLabelAviso, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanelDatosLayout.createSequentialGroup()
-                        .addComponent(jButtonLimpRuta)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jButtonLimpTabla)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(jPanelDatosLayout.createSequentialGroup()
-                        .addComponent(jLabelCarpeta)
-                        .addGap(18, 18, 18)
-                        .addComponent(jTextFieldRuta, javax.swing.GroupLayout.PREFERRED_SIZE, 255, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(jButtonSeleccionar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addGroup(jPanelDatosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanelDatosLayout.createSequentialGroup()
+                                .addComponent(jButtonLimpRuta)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jButtonLimpTabla))
+                            .addGroup(jPanelDatosLayout.createSequentialGroup()
+                                .addComponent(jLabelCarpeta)
+                                .addGap(18, 18, 18)
+                                .addComponent(jTextFieldRuta, javax.swing.GroupLayout.PREFERRED_SIZE, 255, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(jToggleButtonBuscar, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanelDatosLayout.setVerticalGroup(
@@ -133,7 +123,7 @@ public class PrincipalJFrame extends javax.swing.JFrame {
                 .addGroup(jPanelDatosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabelCarpeta)
                     .addComponent(jTextFieldRuta, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButtonSeleccionar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jToggleButtonBuscar))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanelDatosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jButtonLimpTabla, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -141,11 +131,54 @@ public class PrincipalJFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabelAviso, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPaneTabla, javax.swing.GroupLayout.DEFAULT_SIZE, 282, Short.MAX_VALUE)
+                .addComponent(jScrollPaneTabla, javax.swing.GroupLayout.DEFAULT_SIZE, 289, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         jSplitPaneDivisor.setRightComponent(jPanelDatos);
+
+        jPanelArbol.setPreferredSize(new java.awt.Dimension(400, 398));
+
+        jButtonActualizarArbol.setText("Actualizar árbol");
+        jButtonActualizarArbol.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonActualizarArbolActionPerformed(evt);
+            }
+        });
+
+        jScrollPaneRamas.setPreferredSize(new java.awt.Dimension(400, 322));
+
+        jTreeArbol.addTreeSelectionListener(new javax.swing.event.TreeSelectionListener() {
+            public void valueChanged(javax.swing.event.TreeSelectionEvent evt) {
+                jTreeArbolValueChanged(evt);
+            }
+        });
+        jScrollPaneRamas.setViewportView(jTreeArbol);
+
+        javax.swing.GroupLayout jPanelArbolLayout = new javax.swing.GroupLayout(jPanelArbol);
+        jPanelArbol.setLayout(jPanelArbolLayout);
+        jPanelArbolLayout.setHorizontalGroup(
+            jPanelArbolLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelArbolLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jButtonActualizarArbol)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(jPanelArbolLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(jScrollPaneRamas, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 127, Short.MAX_VALUE))
+        );
+        jPanelArbolLayout.setVerticalGroup(
+            jPanelArbolLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelArbolLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jButtonActualizarArbol)
+                .addContainerGap(364, Short.MAX_VALUE))
+            .addGroup(jPanelArbolLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanelArbolLayout.createSequentialGroup()
+                    .addGap(0, 76, Short.MAX_VALUE)
+                    .addComponent(jScrollPaneRamas, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+        );
+
+        jSplitPaneDivisor.setLeftComponent(jPanelArbol);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -226,11 +259,10 @@ public class PrincipalJFrame extends javax.swing.JFrame {
         try {
             File[] files = file.listFiles();
             DefaultMutableTreeNode dmtn;
-            jTreeArbol.repaint();
             if (files != null) {
                 for (File f : files) {
                     dmtn = new DefaultMutableTreeNode(f.getName());
-                    nodo.add(dmtn);
+                    nodo.add(dmtn);                    
                     generarHijos(f, dmtn);
                 }
             }
@@ -241,79 +273,30 @@ public class PrincipalJFrame extends javax.swing.JFrame {
 
     //FUNCIÓN QUE CREA UN HILO PARA LA BÚSQUEDA Y CREACIÓN DE ÁRBOL DE FORMA RECURSIVA
     //--------------------------------------------------------------------------
-    private Thread crearHilo() {
+    private Thread crearHilo(File fichero, DefaultMutableTreeNode dmtn) {
         return new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    if (jTextFieldRuta.getText().isEmpty()) {
-                        jLabelAviso.setText("Debe introducir una ruta.");
-                    } else {
-                        File fichero = new File(jTextFieldRuta.getText());
-                        if (fichero.exists()) {
-                            DefaultMutableTreeNode dmtn = new DefaultMutableTreeNode(fichero.getCanonicalFile());
-
-                            dTreeModel.setRoot(dmtn);
-                            jLabelAviso.setText("Cargando información...");
-                            generarHijos(fichero, dmtn);
-                            jLabelAviso.setText("Proceso finalizado.");
-                            jButtonSeleccionar.setText("Iniciar búsqueda");
-                            jButtonSeleccionar.setPreferredSize(new Dimension(122, 23));
-                        } else {
-                            jLabelAviso.setText("La ruta introducida no es correcta.");
-                        }
-                    }
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(null, "Se produjo un error en la ejecución: " + e);
-                }
+                generarHijos(fichero, dmtn);
+                dTreeModel.reload();
+                jLabelAviso.setText("Proceso finalizado.");
+                jToggleButtonBuscar.setText("Buscar");
+                jToggleButtonBuscar.getModel().setSelected(false);
             }
         });
-
     }
 
 
-    private void jButtonSeleccionarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSeleccionarActionPerformed
-        if (jButtonSeleccionar.getText().equals("Iniciar búsqueda")) {
-            try {
-                if (hiloBusqueda == null || (hiloBusqueda.getState() != Thread.State.NEW)) {
-                    hiloBusqueda = crearHilo();
-
-                    hiloBusqueda.start();
-                    jButtonSeleccionar.setText("Detener");
-                    jButtonSeleccionar.setPreferredSize(new Dimension(122, 23));
-                }
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(null, "El programa no pudo realizar la acción solicitada");
-            }
-
-        } else {
-            if (jButtonSeleccionar.getText().equals("Detener")) {
-                try {
-                    if (hiloBusqueda == null || (hiloBusqueda.getState() != Thread.State.TERMINATED)) {
-                        hiloBusqueda.interrupt();
-                        jButtonSeleccionar.setText("Iniciar búsqueda");
-                        jButtonSeleccionar.setPreferredSize(new Dimension(122, 23));
-                        jLabelAviso.setText("Búsqueda cancelada.");
-                    }
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(null, "El programa no pudo realizar la acción solicitada");
-                }
-            }
-        }
-
-
-    }//GEN-LAST:event_jButtonSeleccionarActionPerformed
-
-
     private void jTreeArbolValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_jTreeArbolValueChanged
-        System.out.println(evt.getNewLeadSelectionPath());
+
         if (evt.getNewLeadSelectionPath() != null) {
-            
-            TreePath tp = jTreeArbol.getSelectionPath();
+
+            TreePath tp = evt.getNewLeadSelectionPath();
             File ficheroPrincipal = new File(convertirTreePathAString(tp));
-            limpiarTabla();
+
             try {
                 if (tp != null && ficheroPrincipal.exists()) {
+                    limpiarTabla();
                     File[] subficherosEncontrados = ficheroPrincipal.listFiles();
 
                     if (subficherosEncontrados == null || subficherosEncontrados.length == 0) {
@@ -347,8 +330,55 @@ public class PrincipalJFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jButtonLimpRutaActionPerformed
 
     private void jButtonLimpTablaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonLimpTablaActionPerformed
-       limpiarTabla();
+        limpiarTabla();
     }//GEN-LAST:event_jButtonLimpTablaActionPerformed
+
+
+    private void jToggleButtonBuscarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButtonBuscarActionPerformed
+        try {
+            if (hiloBusqueda != null) {
+                hiloBusqueda.interrupt();
+                hiloBusqueda = null;
+            }
+            if (jToggleButtonBuscar.getModel().isSelected() == true) {
+                if (jTextFieldRuta.getText().isEmpty()) {
+                    jLabelAviso.setText("Debe introducir una ruta.");
+
+                    jToggleButtonBuscar.setText("Buscar");
+                    jToggleButtonBuscar.getModel().setSelected(false);
+
+                } else {
+                    File fichero = new File(jTextFieldRuta.getText());
+                    if (fichero.exists()) {
+                        DefaultMutableTreeNode dmtn = new DefaultMutableTreeNode(fichero.getCanonicalFile());
+
+                        dTreeModel.setRoot(dmtn);
+                        jLabelAviso.setText("Cargando información...");
+                        limpiarTabla();
+                        jToggleButtonBuscar.setText("Cancelar");
+                        hiloBusqueda = crearHilo(fichero, dmtn);
+                        hiloBusqueda.start();
+                    } else {
+                        jLabelAviso.setText("La ruta introducida no es correcta.");
+
+                        jToggleButtonBuscar.setText("Buscar");
+                        jToggleButtonBuscar.getModel().setSelected(false);
+                    }
+                }
+            } else {
+                jToggleButtonBuscar.setText("Buscar");
+                jLabelAviso.setText("Operación cancelada");
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "El programa no pudo realizar la acción solicitada");
+        }
+
+
+    }//GEN-LAST:event_jToggleButtonBuscarActionPerformed
+
+    private void jButtonActualizarArbolActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonActualizarArbolActionPerformed
+        dTreeModel.reload();
+    }//GEN-LAST:event_jButtonActualizarArbolActionPerformed
 
     public static void main(String args[]) {
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -390,17 +420,19 @@ public class PrincipalJFrame extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jButtonActualizarArbol;
     private javax.swing.JButton jButtonLimpRuta;
     private javax.swing.JButton jButtonLimpTabla;
-    private javax.swing.JButton jButtonSeleccionar;
     private javax.swing.JLabel jLabelAviso;
     private javax.swing.JLabel jLabelCarpeta;
+    private javax.swing.JPanel jPanelArbol;
     private javax.swing.JPanel jPanelDatos;
     private javax.swing.JScrollPane jScrollPaneRamas;
     private javax.swing.JScrollPane jScrollPaneTabla;
     private javax.swing.JSplitPane jSplitPaneDivisor;
     private javax.swing.JTable jTableContenido;
     private javax.swing.JTextField jTextFieldRuta;
+    private javax.swing.JToggleButton jToggleButtonBuscar;
     private javax.swing.JTree jTreeArbol;
     // End of variables declaration//GEN-END:variables
 }
