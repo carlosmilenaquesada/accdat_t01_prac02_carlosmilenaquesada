@@ -2,6 +2,7 @@ package vista;
 
 import java.awt.Dimension;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -30,8 +31,6 @@ public class PrincipalJFrame extends javax.swing.JFrame {
         this.raiz = new DefaultMutableTreeNode("vacio");
         this.dTreeModel = new DefaultTreeModel(raiz);
         this.jTreeArbol.setModel(dTreeModel);
-
-        hiloBusqueda = crearHilo();
     }
 
     @SuppressWarnings("unchecked")
@@ -178,7 +177,7 @@ public class PrincipalJFrame extends javax.swing.JFrame {
         String tamanio = "";
         try {
             tamanio = String.valueOf(Files.size(f.toPath()));
-        } catch (Exception e) {
+        } catch (IOException e) {
             tamanio = "no encontrado";
         }
         return tamanio;
@@ -203,18 +202,19 @@ public class PrincipalJFrame extends javax.swing.JFrame {
     }
 
     private static String obtenerFechaModificacion(File file) {
-        String valor = "";
+        String fechaFormateada = "";
         try {
-            DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-            Date currentDate = new Date(file.lastModified());
-            valor = df.format(currentDate.getTime());
+            final DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+
+            fechaFormateada = df.format(file.lastModified());
+
         } catch (Exception e) {
-            valor = "no encontrado";
+            fechaFormateada = "no encontrado";
         }
-        return valor;
+        return fechaFormateada;
     }
 
-    private void borrarTabla() {
+    private void limpiarTabla() {
         for (int i = dtm.getRowCount() - 1; i >= 0; i--) {
             dtm.removeRow(i);
         }
@@ -274,22 +274,30 @@ public class PrincipalJFrame extends javax.swing.JFrame {
 
     private void jButtonSeleccionarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSeleccionarActionPerformed
         if (jButtonSeleccionar.getText().equals("Iniciar búsqueda")) {
-            if (hiloBusqueda.getState() != Thread.State.NEW) {
-                hiloBusqueda = crearHilo();
+            try {
+                if (hiloBusqueda == null || (hiloBusqueda.getState() != Thread.State.NEW)) {
+                    hiloBusqueda = crearHilo();
+
+                    hiloBusqueda.start();
+                    jButtonSeleccionar.setText("Detener");
+                    jButtonSeleccionar.setPreferredSize(new Dimension(122, 23));
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "El programa no pudo realizar la acción solicitada");
             }
-            jButtonSeleccionar.setText("Detener");
-            jButtonSeleccionar.setPreferredSize(new Dimension(122, 23));
-            hiloBusqueda.start();
+
         } else {
             if (jButtonSeleccionar.getText().equals("Detener")) {
-                jButtonSeleccionar.setText("Iniciar búsqueda");
-                jButtonSeleccionar.setPreferredSize(new Dimension(122, 23));
-                jLabelAviso.setText("Búsqueda cancelada.");
-
-                if (hiloBusqueda.getState() != Thread.State.TERMINATED) {
-                    hiloBusqueda.interrupt();
+                try {
+                    if (hiloBusqueda == null || (hiloBusqueda.getState() != Thread.State.TERMINATED)) {
+                        hiloBusqueda.interrupt();
+                        jButtonSeleccionar.setText("Iniciar búsqueda");
+                        jButtonSeleccionar.setPreferredSize(new Dimension(122, 23));
+                        jLabelAviso.setText("Búsqueda cancelada.");
+                    }
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(null, "El programa no pudo realizar la acción solicitada");
                 }
-
             }
         }
 
@@ -300,9 +308,10 @@ public class PrincipalJFrame extends javax.swing.JFrame {
     private void jTreeArbolValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_jTreeArbolValueChanged
         System.out.println(evt.getNewLeadSelectionPath());
         if (evt.getNewLeadSelectionPath() != null) {
+            
             TreePath tp = jTreeArbol.getSelectionPath();
             File ficheroPrincipal = new File(convertirTreePathAString(tp));
-            borrarTabla();
+            limpiarTabla();
             try {
                 if (tp != null && ficheroPrincipal.exists()) {
                     File[] subficherosEncontrados = ficheroPrincipal.listFiles();
@@ -338,8 +347,7 @@ public class PrincipalJFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jButtonLimpRutaActionPerformed
 
     private void jButtonLimpTablaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonLimpTablaActionPerformed
-        borrarTabla();
-
+       limpiarTabla();
     }//GEN-LAST:event_jButtonLimpTablaActionPerformed
 
     public static void main(String args[]) {
